@@ -1,0 +1,101 @@
+#NLP Assignment
+#data-One plus Mobile Review
+test=read.csv(file.choose(),header=T)
+str(test)
+
+#Build corpus
+library(tm)
+corpus=Corpus(VectorSource(test$a.size.base))
+inspect(corpus[1:5])
+
+#clean text
+corpus=tm_map(corpus,tolower)
+inspect(corpus[1:5])
+
+corpus=tm_map(corpus,removePunctuation)
+inspect(corpus[1:5])
+
+corpus=tm_map(corpus,removeNumbers)
+inspect(corpus[1:5])
+
+cleanset=tm_map(corpus,removeWords,stopwords('english'))#stopwords-and , or
+inspect(cleanset[1:5])
+
+cleanset=tm_map(cleanset,removeWords,c('oneplus','can','now','get','ever','till','mobile','just','one','review','display','for','phone','price','product'))
+
+cleanset=tm_map(cleanset,gsub,pattern = 'cameras',replacement='camera')#gsub is for replacement
+
+cleanset=tm_map(cleanset,stripWhitespace)
+inspect(cleanset[1:5])
+
+#Term document matrix
+dtm <- TermDocumentMatrix(cleanset)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 50)
+
+#wordcloud
+library("wordcloud")
+library("RColorBrewer")
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+#hierarchial cluster
+distMatrix= dist(dtm,method = 'euclidean')
+head(distMatrix)
+
+dendo=hclust(distMatrix,method = "ward.D")
+plot(dendo)
+###
+##calculate distance matrix(default is Euclidean distance)
+distance= dist(dtm)
+
+#Hierarchial agglomerative clustering using default complete linkage
+data.hclust= hclust(distance)
+plot(data.hclust)
+plot(data.hclust,hang = -1)#to bring it down to below zero
+
+#hierarchial agglomerative clustering using "average" linkage
+data.hclust=hclust(distance,method = "average")
+plot(data.hclust,hang = -1)
+
+#cluster membership
+member=cutree(data.hclust,3)
+table(member)
+
+
+#k-means clustering
+kc=kmeans(dtm,3)
+kc
+kc$centers
+kc$size
+
+kc$betweenss
+
+
+###below this not running
+##Unsupervised self-organising Maps
+library(kohonen)
+
+#data
+data=read.csv(file.choose(),header = T)
+str(data)
+x=scale(data[,-1])#normalisation of data
+summary(x)
+
+#SOM
+set.seed(222)
+g=somgrid(xdim = 4,ydim = 4,topo = "rectangular")
+map=som(x, grid=g,alpha=c(0.05,0.01),radius=1)
+plot(map)
+map
+map$unit.classif#cluster id of that particular row
+map$codes#scaled values of each of the cluster thqat we hav created
+map$distance.weights
+
+
+plot(map,type = 'count')
+plot(map,type='dist.neighbours')
