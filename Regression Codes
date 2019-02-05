@@ -1,0 +1,102 @@
+#Libarires Needed
+library(caret)
+library(mlbench)
+data=read.csv(file.choose())
+data
+head(data)
+plot(data$SalePrice,data$LotArea)
+
+
+#data preparation
+cor(data$SalePrice,data$LotArea)
+sapply(data,function(x)sum(is.na(x)))
+data$LotFrontage[is.na(data$LotFrontage)]=round(mean(data$LotFrontage,na.rm=TRUE))
+sapply(data,function(x)sum(is.na(x)))
+cor(data$SalePrice,data$LotFrontage)
+sapply(data,function(x)sum(is.na(x)))
+data$MasVnrArea[is.na(data$MasVnrArea)]=round(mean(data$MasVnrArea,na.rm=TRUE))
+sapply(data,function(x)sum(is.na(x)))
+cor(data$SalePrice,data$MasVnrArea)
+cor(data$SalePrice,data$BsmtFinSF1)
+cor(data$SalePrice,data$BsmtFinSF2)
+cor(data$SalePrice,data$BsmtUnfSF)
+cor(data$SalePrice,data$TotalBsmtSF)##0.6135806
+cor(data$SalePrice,data$X1stFlrSF)##
+cor(data$SalePrice,data$X2ndFlrSF)
+cor(data$SalePrice,data$LowQualFinSF)
+cor(data$SalePrice,data$GrLivArea)##
+cor(data$SalePrice,data$TotRmsAbvGrd)#
+cor(data$SalePrice,data$Fireplaces)
+cor(data$SalePrice,data$GarageArea)##
+cor(data$SalePrice,data$GarageCars)##
+cor(data$SalePrice,data$WoodDeckSF)
+cor(data$SalePrice,data$OpenPorchSF)
+cor(data$SalePrice,data$EnclosedPorch)
+cor(data$SalePrice,data$X3SsnPorch)
+cor(data$SalePrice,data$ScreenPorch)
+cor(data$SalePrice,data$PoolArea)
+cor(data$SalePrice,data$MiscVal)
+
+
+
+#Multiple linear regression
+model1=lm(data$SalePrice~data$TotalBsmtSF+data$X1stFlrSF+data$GrLivArea+data$TotRmsAbvGrd+data$GarageArea+data$GarageCars)
+model1
+summary(model1)
+
+#Predict with test data
+#applying on test data
+test=read.csv(file.choose())
+test
+head(test)
+
+#Predict testmodel1
+#residual Analysis
+pred=predict(model1,newdata=test)
+res=residuals(model1,newdata=test)
+cbind(pred,res)
+qqnorm(res)
+qqline(res)
+#other parameters for time series 
+mad=mean(abs(res))
+mad
+mse=mean(res^2)
+mse
+rmse=sqrt(mse)
+rmse#44741.41
+##end##
+
+
+
+
+
+#Mode3-MULTINOMIAL REGRESSION
+#traindata
+model2=lm(data$SalePrice~data$TotalBsmtSF+data$LotFrontage+data$LotArea+data$MasVnrArea+data$BsmtFinSF1+data$BsmtFinSF2+data$BsmtUnfSF+data$X2ndFlrSF+data$LowQualFinSF+data$Fireplaces+data$WoodDeckSF+data$OpenPorchSF+data$EnclosedPorch+data$X3SsnPorch+data$ScreenPorch+data$PoolArea+data$MiscVal+data$X1stFlrSF+data$GrLivArea+data$TotRmsAbvGrd+data$GarageArea+data$GarageCars)
+model2
+summary(model2)
+
+
+#applying on test data for prediction
+test=read.csv(file.choose())
+test
+head(test)
+
+
+
+#Predict testmodel2
+#residual Analysis
+pred=predict(model2)
+res=residuals(model2)
+cbind(pred,res)
+qqnorm(res)
+qqline(res)
+shapiro.test(res)
+#other parameters for time series 
+mad=mean(abs(res))
+
+mad
+mse=mean(res^2)
+mse
+rmse=sqrt(mse)
+rmse#42376.77--test
