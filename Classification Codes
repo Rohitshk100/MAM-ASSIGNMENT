@@ -1,0 +1,128 @@
+#classification Assignment
+#classification practice
+library(rpart)
+library(rpart.plot)
+library(e1071)
+#loading data
+traindata=read.csv(file.choose())
+head(traindata)
+dim(traindata)
+str(traindata)
+
+#data cleaning
+#checking missing value
+sum(complete.cases(traindata))
+sapply(traindata,function(x)sum(is.na(x)))
+
+str(traindata)
+
+#filling the missing value
+traindata$Age[is.na(traindata$Age)]=round(mean(traindata$Age,na.rm=TRUE))
+
+str(traindata)
+sum(complete.cases(traindata))
+sapply(traindata,function(x)sum(is.na(x)))
+names(traindata)
+
+#removing the unused atributes
+train=traindata[,-c(4,5,9,11,12)]#Name,sex,ticket,cabin , embark
+names(train)
+str(train)
+
+
+#DATA preparation
+
+res=cor(train[2:7])
+round(res,2)
+
+#Removing PClass
+train=train[,-c(3)]
+names(train)
+
+#checking correlation between Independent and dependent variables
+cor(train[,1:6],train$Survived)
+names(train)
+str(train)
+#labelling grant and not grant
+train$Survived=factor(train$Survived,levels =c(0,1),labels= c("Not Survived","Survived"))
+summary(train)
+
+
+#classifying Algorithm
+library(rpart)
+library(rpart.plot)
+
+#Decision Test
+#make model using Train data
+model.tree=rpart(Survived~.,data = train,method = "class")
+summary(model.tree)
+prp(model.tree,cex = 0.8,extra=2)#decision tree diagram
+plotcp(model.tree)
+printcp(model.tree)
+ptree=prune(model.tree,0.01)# for simplified decision tree
+prp(ptree,cex=0.8,extra=2)
+
+#predicting performance (using tesT data)
+test=read.csv(file.choose(),header = T)
+names(test)
+pred.tree=predict(ptree,test,type="class")
+#performance matrix for decision tree
+conf.matrix=table(pred.tree,test$PassengerId)
+print(conf.matrix)
+
+performance=function(m)
+{
+  #accuracy=0;Sensitivity=0;specificity=0;Time=0
+  accuracy=sum(diag(conf.matrix))/sum(conf.matrix)
+  senstivity=conf.matrix[1,1]/sum(conf.matrix[1,])
+  specificity=conf.matrix[2,2]/sum(conf.matrix[2,])
+  
+  Perform=c(accuracy,senstivity,specificity)
+  return(Perform)
+}
+Perform_DT=performance(conf.matrix)
+print(Perform_DT)
+
+#NAIVE bAYES
+model.NB=naiveBayes(Survived~.,data=train,laplace = 3)
+pred.NB=predict(model.NB,test,type="class")
+head(pred.NB)
+
+#performance matrix for NB
+conf.matrix=table(test$PassengerId,pred.NB)
+print(conf.matrix)
+perform_NB=performance(conf.matrix)
+print(perform_NB)
+
+#SVM
+model.svm=svm(formula=Survived~.,data=train)
+print(model.svm)
+pred.svm=predict(model.svm,test)
+head(pred.svm)
+
+#performance matrix for SVM
+conf.matrix=table(test$PassengerId,pred.svm)
+print(conf.matrix)
+Perform_SVM=performance(conf.matrix)
+print(Perform_SVM)
+
+#Logistics Regression
+model.glm=glm(Survived~.,data=train,family=binomial)
+print(model.glm)
+predict=predict(model.glm,test,type="response")
+Pred_LR=ifelse(predict>0.5,1,0)
+
+#performance Matrix for LR
+conf.matrix=table(test$PassengerId,Pred_LR)
+print(conf.matrix)
+Perform_LR=performance(conf.matrix)
+print(Perform_LR)
+
+#combining all methods performance
+P_matrics=matrix(c(Perform_DT,Perform_SVM,Perform_LR),4,3,b=1)
+colnames(P_matrics)=c("Accuracy","Senstivity","Specificity")
+rownames(P_matrics)=c("Decison Tree","Naive Bayes","SVM","Log. Regression")
+print(P_matrics)
+
+
+apply(P_matrics,1,mean)
